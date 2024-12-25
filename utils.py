@@ -31,7 +31,8 @@ import torch
 from torch import nn
 import torch.distributed as dist
 from PIL import ImageFilter, ImageOps
-
+import warnings
+import argparse
 
 class GaussianBlur(object):
     """
@@ -827,3 +828,22 @@ def multi_scale(samples, model):
     v /= 3
     v /= v.norm()
     return v
+
+def remove_module_prefix(state_dict):
+    """
+    Hàm xóa tiền tố 'module.' khỏi các key trong state_dict.
+
+    Args:
+        state_dict (dict): state_dict chứa các tham số của mô hình.
+
+    Returns:
+        dict: state_dict mới với tiền tố 'module.' đã bị loại bỏ.
+    """
+    new_state_dict = {}
+    for key, value in state_dict.items():
+        new_key = key.replace('module.', '')  # Xóa tiền tố 'module.'
+        new_state_dict[new_key] = value
+    return new_state_dict
+
+
+

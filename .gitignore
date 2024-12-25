@@ -1,0 +1,10 @@
+weights/*
+checkpoints/*
+*.pth
+__pycache__/
+experiment/**/*.zip
+.spyproject/
+.spyproject/*
+experiment/images
+**/.ipynb_checkpoints/
+**/ckpt/*

@@ -158,7 +158,17 @@ def train_dino(args):
     # we changed the name DeiT-S for ViT-S to avoid confusions
     args.arch = args.arch.replace("deit", "vit")
     # if the network is a Vision Transformer (i.e. vit_tiny, vit_small, vit_base)
-    if args.arch in vits.__dict__.keys():
+    #https://dl.fbaipublicfiles.com/dino/dino_deitsmall8_pretrain/dino_deitsmall8_pretrain_full_checkpoint.pth
+    if args.arch == 'vit_small_from_checkpoint':
+        student, student_state_dict = vits.__dict__[args.arch](
+            patch_size=args.patch_size,
+            drop_path_rate=args.drop_path_rate,  # stochastic depth
+            mode = 'student'
+        )
+        teacher, teacher_state_dict = vits.__dict__[args.arch](patch_size=args.patch_size, mode = 'teacher')
+        embed_dim = student.embed_dim
+    
+    elif args.arch in vits.__dict__.keys():
         student = vits.__dict__[args.arch](
             patch_size=args.patch_size,
             drop_path_rate=args.drop_path_rate,  # stochastic depth
@@ -185,11 +195,17 @@ def train_dino(args):
         args.out_dim,
         use_bn=args.use_bn_in_head,
         norm_last_layer=args.norm_last_layer,
-    ))
+    ))  
+        
     teacher = utils.MultiCropWrapper(
         teacher,
         DINOHead(embed_dim, args.out_dim, args.use_bn_in_head),
     )
+    
+    if 'student_state_dict' in locals() or 'student_state_dict' in globals():
+        student.load_state_dict(student_state_dict)
+        teacher.load_state_dict(teacher_state_dict)
+     
     # move networks to gpu
     student, teacher = student.cuda(), teacher.cuda()
     # synchronize batch norms (if any)
